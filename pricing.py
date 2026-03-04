@@ -111,27 +111,27 @@ def _roundup(value, digits):
 # ---------------------------------------------------------------------------
 @dataclass
 class RateTable:
-    """テーブルシートの掛率設定"""
-    # UP, チャージ
-    up: float = 1.0
-    charge: float = 6000.0
+    """テーブルシートの掛率設定（20231001以降の掛率）"""
+    # UP, チャージ (A3, B3)
+    up: float = 1.29
+    charge: float = 3737.0     # 円/時間
 
-    # M番 T仕切り掛率
-    m_rate_1: float = 1.6      # 価格帯1未満
-    m_band_1: float = 5000     # 価格帯1
-    m_rate_2: float = 1.5      # 価格帯1以上 価格帯2未満
-    m_band_2: float = 20000    # 価格帯2
-    m_rate_3: float = 1.4      # 価格帯3以上
-    m_band_3: float = 20000    # 価格帯3
+    # M番 T仕切り掛率 (F3-F5, D3-E4, D5)
+    m_rate_1: float = 3.465    # 346.5% 原価0～500未満
+    m_band_1: float = 500      # 価格帯1 (E3)
+    m_rate_2: float = 3.465    # 346.5% 原価500～5000未満
+    m_band_2: float = 5000     # 価格帯2 (E4)
+    m_rate_3: float = 2.888    # 288.8% 原価5000以上
+    m_band_3: float = 5000     # 価格帯3 (D5)
 
     # 各カテゴリ掛率
-    rate_4: float = 1.3        # 4番（購入品）
-    rate_e: float = 1.5        # E番
-    rate_a: float = 0.9        # A番（÷掛率）
-    rate_l: float = 1.4        # L番
-    rate_cv: float = 1.4       # CV番
-    rate_um: float = 1.3       # UM番
-    rate_p: float = 1.4        # P番
+    rate_4: float = 1.525      # 152.5% 購入品 (F10)
+    rate_e: float = 1.525      # 152.5% E,F番 (F19)
+    rate_a: float = 0.85       # 85.0%  A番 割り戻し率 ÷掛率 (F27)
+    rate_l: float = 1.525      # 152.5% L番 (F32)
+    rate_cv: float = 1.525     # 152.5% CV番 (F36)
+    rate_um: float = 1.525     # 152.5% UM番 (F40)
+    rate_p: float = 1.525      # 152.5% P番 (F23)
 
     # HI仕切り
     hi_var1: float = 1.0
