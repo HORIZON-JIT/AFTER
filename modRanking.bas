@@ -2,41 +2,41 @@ Attribute VB_Name = "modRanking"
 Option Explicit
 
 ' ==========================================================
-' ã‚¢ãƒ•ã‚¿ãƒ¼éƒ¨é–€ å‡ºè·æ•°ãƒ©ãƒ³ã‚­ãƒ³ã‚° TOP500  (Excel VBAç‰ˆ)
+' ƒAƒtƒ^[•”–å o‰×”ƒ‰ƒ“ƒLƒ“ƒO TOP500  (Excel VBA”Å)
 '
-' ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—æ‰‹é †:
-'   1. æ–°è¦ Excel ãƒ–ãƒƒã‚¯ã‚’é–‹ã .xlsm ã§ä¿å­˜
-'   2. Alt+F11 â†’ VBA ã‚¨ãƒ‡ã‚£ã‚¿ã‚’é–‹ã
-'   3. [ãƒ•ã‚¡ã‚¤ãƒ«] â†’ [ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¤ãƒ³ãƒãƒ¼ãƒˆ] ã§ã“ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é¸æŠ
-'   4. VBA ã‚¨ãƒ‡ã‚£ã‚¿ã‚’é–‰ã˜ã‚‹
-'   5. Alt+F8 â†’ InitRanking ã‚’å®Ÿè¡Œ
-'   6. ã‚·ãƒ¼ãƒˆä¸Šã®ãƒœã‚¿ãƒ³ã§æ“ä½œé–‹å§‹
+' ƒZƒbƒgƒAƒbƒvè‡:
+'   1. V‹K Excel ƒuƒbƒN‚ğŠJ‚« .xlsm ‚Å•Û‘¶
+'   2. Alt+F11 ¨ VBA ƒGƒfƒBƒ^‚ğŠJ‚­
+'   3. [ƒtƒ@ƒCƒ‹] ¨ [ƒtƒ@ƒCƒ‹‚ÌƒCƒ“ƒ|[ƒg] ‚Å‚±‚Ìƒtƒ@ƒCƒ‹‚ğ‘I‘ğ
+'   4. VBA ƒGƒfƒBƒ^‚ğ•Â‚¶‚é
+'   5. Alt+F8 ¨ InitRanking ‚ğÀs
+'   6. ƒV[ƒgã‚Ìƒ{ƒ^ƒ“‚Å‘€ìŠJn
 '
-' Oracle æ¥ç¶šã«ã¯ Oracle Client ãŒå¿…è¦ã§ã™ã€‚
-' æ¥ç¶šã§ããªã„å ´åˆã¯ãƒ‡ãƒ¢ãƒ‡ãƒ¼ã‚¿ã§å‹•ä½œã—ã¾ã™ã€‚
+' Oracle Ú‘±‚É‚Í Oracle Client ‚ª•K—v‚Å‚·B
+' Ú‘±‚Å‚«‚È‚¢ê‡‚Íƒfƒ‚ƒf[ƒ^‚Å“®ì‚µ‚Ü‚·B
 ' ==========================================================
 
-' â”€â”€ DB æ¥ç¶šè¨­å®š â”€â”€
+' „Ÿ„Ÿ DB Ú‘±İ’è „Ÿ„Ÿ
 Private Const DB_USER As String = "ECOREAD"
 Private Const DB_PASS As String = "ECOread01#"
 Private Const DB_DSN  As String = "172.25.3.119:1521/orcl.hrz.local"
 Private Const MAX_RANK As Long = 500
 
-' â”€â”€ ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆå®šæ•° â”€â”€
-Private Const SH_NAME   As String = "ãƒ©ãƒ³ã‚­ãƒ³ã‚°"
-Private Const HDR_ROW   As Long = 9     ' ãƒ†ãƒ¼ãƒ–ãƒ«ãƒ˜ãƒƒãƒ€ãƒ¼è¡Œ
-Private Const DAT_ROW   As Long = 10    ' ãƒ‡ãƒ¼ã‚¿é–‹å§‹è¡Œ
-Private Const MODE_CELL As String = "G1" ' ãƒ¢ãƒ¼ãƒ‰ä¿å­˜ã‚»ãƒ« (éè¡¨ç¤ºåˆ—)
-Private Const DATE_CELL As String = "D3" ' æ—¥ä»˜å…¥åŠ›ã‚»ãƒ«
-Private Const HINT_CELL As String = "E3" ' ãƒ’ãƒ³ãƒˆè¡¨ç¤ºã‚»ãƒ«
+' „Ÿ„Ÿ ƒŒƒCƒAƒEƒg’è” „Ÿ„Ÿ
+Private Const SH_NAME   As String = "ƒ‰ƒ“ƒLƒ“ƒO"
+Private Const HDR_ROW   As Long = 9     ' ƒe[ƒuƒ‹ƒwƒbƒ_[s
+Private Const DAT_ROW   As Long = 10    ' ƒf[ƒ^ŠJns
+Private Const MODE_CELL As String = "G1" ' ƒ‚[ƒh•Û‘¶ƒZƒ‹ (”ñ•\¦—ñ)
+Private Const DATE_CELL As String = "D3" ' “ú•t“ü—ÍƒZƒ‹
+Private Const HINT_CELL As String = "E3" ' ƒqƒ“ƒg•\¦ƒZƒ‹
 
 ' ===========================================================
-'  åˆæœŸã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ— (Alt+F8 â†’ InitRanking)
+'  ‰ŠúƒZƒbƒgƒAƒbƒv (Alt+F8 ¨ InitRanking)
 ' ===========================================================
 Public Sub InitRanking()
     Dim ws As Worksheet
 
-    ' ---- ã‚·ãƒ¼ãƒˆæº–å‚™ ----
+    ' ---- ƒV[ƒg€”õ ----
     On Error Resume Next
     Set ws = ThisWorkbook.Worksheets(SH_NAME)
     On Error GoTo 0
@@ -56,30 +56,30 @@ Public Sub InitRanking()
     ws.Activate
     Application.ScreenUpdating = False
 
-    ' å…¨ã‚¯ãƒªã‚¢
+    ' ‘SƒNƒŠƒA
     ws.Cells.Clear
     Dim shp As Shape
     For Each shp In ws.Shapes
         shp.Delete
     Next shp
 
-    ' ---- åˆ—å¹… ----
-    ws.Columns("A").ColumnWidth = 8    ' é †ä½
-    ws.Columns("B").ColumnWidth = 18   ' å“ç•ª
-    ws.Columns("C").ColumnWidth = 42   ' å“å
-    ws.Columns("D").ColumnWidth = 14   ' å‡ºè·æ•°åˆè¨ˆ
-    ws.Columns("E").ColumnWidth = 14   ' å‡ºè·å›æ•°
-    ws.Columns("F").ColumnWidth = 2    ' ä½™ç™½
-    ws.Columns("G").ColumnWidth = 0.5  ' ãƒ¢ãƒ¼ãƒ‰æ ¼ç´ (éè¡¨ç¤º)
+    ' ---- —ñ• ----
+    ws.Columns("A").ColumnWidth = 8    ' ‡ˆÊ
+    ws.Columns("B").ColumnWidth = 18   ' •i”Ô
+    ws.Columns("C").ColumnWidth = 42   ' •i–¼
+    ws.Columns("D").ColumnWidth = 14   ' o‰×”‡Œv
+    ws.Columns("E").ColumnWidth = 14   ' o‰×‰ñ”
+    ws.Columns("F").ColumnWidth = 2    ' —]”’
+    ws.Columns("G").ColumnWidth = 0.5  ' ƒ‚[ƒhŠi”[ (”ñ•\¦)
     ws.Columns("G").Hidden = True
 
-    ' ã‚°ãƒªãƒƒãƒ‰ç·š OFF
+    ' ƒOƒŠƒbƒhü OFF
     ActiveWindow.DisplayGridlines = False
 
-    ' ---- Row 1: ã‚¿ã‚¤ãƒˆãƒ«ãƒãƒ¼ ----
+    ' ---- Row 1: ƒ^ƒCƒgƒ‹ƒo[ ----
     With ws.Range("A1:E1")
         .Merge
-        .Value = "ã‚¢ãƒ•ã‚¿ãƒ¼éƒ¨é–€ å‡ºè·æ•°ãƒ©ãƒ³ã‚­ãƒ³ã‚° TOP500"
+        .Value = "ƒAƒtƒ^[•”–å o‰×”ƒ‰ƒ“ƒLƒ“ƒO TOP500"
         .Font.Size = 16
         .Font.Bold = True
         .Font.Color = vbWhite
@@ -89,32 +89,32 @@ Public Sub InitRanking()
         .RowHeight = 42
     End With
 
-    ' ---- Row 2: ä½™ç™½ ----
+    ' ---- Row 2: —]”’ ----
     ws.Rows(2).RowHeight = 6
 
-    ' ---- Row 3: ãƒ¢ãƒ¼ãƒ‰ãƒœã‚¿ãƒ³ + æ—¥ä»˜å…¥åŠ› ----
+    ' ---- Row 3: ƒ‚[ƒhƒ{ƒ^ƒ“ + “ú•t“ü—Í ----
     ws.Rows(3).RowHeight = 30
 
     Dim r3Top As Double: r3Top = ws.Range("A3").Top + 4
     Dim bh As Double:    bh = 22
 
-    ' ãƒ¢ãƒ¼ãƒ‰ãƒœã‚¿ãƒ³
+    ' ƒ‚[ƒhƒ{ƒ^ƒ“
     Dim x As Double: x = ws.Range("A3").Left + 2
-    CreateBtn ws, "btnYearly", x, r3Top, 48, bh, "SetModeYearly", "å¹´é–“", RGB(26, 86, 219), vbWhite
+    CreateBtn ws, "btnYearly", x, r3Top, 48, bh, "SetModeYearly", "”NŠÔ", RGB(26, 86, 219), vbWhite
     x = x + 52
-    CreateBtn ws, "btnMonthly", x, r3Top, 48, bh, "SetModeMonthly", "æœˆé–“", RGB(229, 231, 235), RGB(31, 41, 55)
+    CreateBtn ws, "btnMonthly", x, r3Top, 48, bh, "SetModeMonthly", "ŒŠÔ", RGB(229, 231, 235), RGB(31, 41, 55)
     x = x + 52
-    CreateBtn ws, "btnDaily", x, r3Top, 48, bh, "SetModeDaily", "æ—¥åˆ¥", RGB(229, 231, 235), RGB(31, 41, 55)
+    CreateBtn ws, "btnDaily", x, r3Top, 48, bh, "SetModeDaily", "“ú•Ê", RGB(229, 231, 235), RGB(31, 41, 55)
 
-    ' ã€Œå¯¾è±¡æœŸé–“:ã€ãƒ©ãƒ™ãƒ«
+    ' u‘ÎÛŠúŠÔ:vƒ‰ƒxƒ‹
     With ws.Range("C3")
-        .Value = "å¯¾è±¡æœŸé–“:"
+        .Value = "‘ÎÛŠúŠÔ:"
         .Font.Bold = True
         .Font.Size = 10
         .HorizontalAlignment = xlRight
     End With
 
-    ' æ—¥ä»˜å…¥åŠ›ã‚»ãƒ«
+    ' “ú•t“ü—ÍƒZƒ‹
     With ws.Range(DATE_CELL)
         .NumberFormat = "@"
         .Value = CStr(Year(Date))
@@ -126,41 +126,41 @@ Public Sub InitRanking()
         .Font.Size = 11
     End With
 
-    ' ãƒ’ãƒ³ãƒˆ
+    ' ƒqƒ“ƒg
     With ws.Range(HINT_CELL)
-        .Value = "ä¾‹: 2024"
+        .Value = "—á: 2024"
         .Font.Color = RGB(156, 163, 175)
         .Font.Size = 9
     End With
 
-    ' ãƒ¢ãƒ¼ãƒ‰åˆæœŸå€¤
-    ws.Range(MODE_CELL).Value = "å¹´é–“"
+    ' ƒ‚[ƒh‰Šú’l
+    ws.Range(MODE_CELL).Value = "”NŠÔ"
 
-    ' ---- Row 4: ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ãƒœã‚¿ãƒ³ ----
+    ' ---- Row 4: ƒAƒNƒVƒ‡ƒ“ƒ{ƒ^ƒ“ ----
     ws.Rows(4).RowHeight = 30
     Dim r4Top As Double: r4Top = ws.Range("A4").Top + 4
 
     x = ws.Range("A4").Left + 2
-    CreateBtn ws, "btnPrev", x, r4Top, 52, bh, "NavigatePrev", "â—€ å‰ã¸", RGB(229, 231, 235), RGB(31, 41, 55)
+    CreateBtn ws, "btnPrev", x, r4Top, 52, bh, "NavigatePrev", "<< ‘O‚Ö", RGB(229, 231, 235), RGB(31, 41, 55)
     x = x + 56
-    CreateBtn ws, "btnSearch", x, r4Top, 52, bh, "FetchRanking", "æ¤œç´¢", RGB(26, 86, 219), vbWhite
+    CreateBtn ws, "btnSearch", x, r4Top, 52, bh, "FetchRanking", "ŒŸõ", RGB(26, 86, 219), vbWhite
     x = x + 56
-    CreateBtn ws, "btnNext", x, r4Top, 52, bh, "NavigateNext", "æ¬¡ã¸ â–¶", RGB(229, 231, 235), RGB(31, 41, 55)
+    CreateBtn ws, "btnNext", x, r4Top, 52, bh, "NavigateNext", "Ÿ‚Ö >>", RGB(229, 231, 235), RGB(31, 41, 55)
 
     CreateBtn ws, "btnCSV", ws.Range("D4").Left + 2, r4Top, 75, bh, _
-              "ExportCSV", "CSVå‡ºåŠ›", RGB(16, 185, 129), vbWhite
+              "ExportCSV", "CSVo—Í", RGB(16, 185, 129), vbWhite
 
-    ' ---- Row 5: ä½™ç™½ ----
+    ' ---- Row 5: —]”’ ----
     ws.Rows(5).RowHeight = 6
 
-    ' ---- Row 6: ã‚µãƒãƒªãƒ¼ ----
-    ws.Range("A6").Value = "é›†è¨ˆæœŸé–“:"
+    ' ---- Row 6: ƒTƒ}ƒŠ[ ----
+    ws.Range("A6").Value = "WŒvŠúŠÔ:"
     ws.Range("A6").Font.Bold = True
     ws.Range("A6").Font.Size = 10
     ws.Range("B6").Font.Size = 11
     ws.Range("B6").Font.Color = RGB(26, 86, 219)
     ws.Range("B6").Font.Bold = True
-    ws.Range("C6").Value = "å“ç•ªæ•°:"
+    ws.Range("C6").Value = "•i”Ô”:"
     ws.Range("C6").Font.Bold = True
     ws.Range("C6").Font.Size = 10
     ws.Range("C6").HorizontalAlignment = xlRight
@@ -170,8 +170,8 @@ Public Sub InitRanking()
     ws.Range("E6").Font.Color = RGB(26, 86, 219)
     ws.Range("E6").Font.Bold = True
 
-    ' ---- Row 7: ãƒ•ã‚£ãƒ«ã‚¿ãƒ¼ ----
-    ws.Range("A7").Value = "çµã‚Šè¾¼ã¿:"
+    ' ---- Row 7: ƒtƒBƒ‹ƒ^[ ----
+    ws.Range("A7").Value = "i‚è‚İ:"
     ws.Range("A7").Font.Bold = True
     ws.Range("A7").Font.Size = 10
     With ws.Range("B7:C7")
@@ -185,16 +185,16 @@ Public Sub InitRanking()
 
     Dim r7Top As Double: r7Top = ws.Range("A7").Top + 3
     CreateBtn ws, "btnFilter", ws.Range("D7").Left + 2, r7Top, 52, bh, _
-              "ApplyFilter", "çµã‚Šè¾¼ã¿", RGB(107, 114, 128), vbWhite
+              "ApplyFilter", "i‚è‚İ", RGB(107, 114, 128), vbWhite
     CreateBtn ws, "btnClear", ws.Range("E7").Left + 2, r7Top, 52, bh, _
-              "ClearFilter", "è§£é™¤", RGB(229, 231, 235), RGB(31, 41, 55)
+              "ClearFilter", "‰ğœ", RGB(229, 231, 235), RGB(31, 41, 55)
 
-    ' ---- Row 8: ä½™ç™½ ----
+    ' ---- Row 8: —]”’ ----
     ws.Rows(8).RowHeight = 6
 
-    ' ---- Row 9: ãƒ†ãƒ¼ãƒ–ãƒ«ãƒ˜ãƒƒãƒ€ãƒ¼ ----
+    ' ---- Row 9: ƒe[ƒuƒ‹ƒwƒbƒ_[ ----
     Dim headers As Variant
-    headers = Array("é †ä½", "å“ç•ª", "å“å", "å‡ºè·æ•°åˆè¨ˆ", "å‡ºè·å›æ•°")
+    headers = Array("‡ˆÊ", "•i”Ô", "•i–¼", "o‰×”‡Œv", "o‰×‰ñ”")
     Dim i As Long
     For i = 0 To 4
         With ws.Cells(HDR_ROW, i + 1)
@@ -212,10 +212,10 @@ Public Sub InitRanking()
     ws.Cells(HDR_ROW, 4).HorizontalAlignment = xlRight
     ws.Cells(HDR_ROW, 5).HorizontalAlignment = xlRight
 
-    ' åˆæœŸãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+    ' ‰ŠúƒƒbƒZ[ƒW
     With ws.Range("A" & DAT_ROW & ":E" & DAT_ROW)
         .Merge
-        .Value = "ã€Œæ¤œç´¢ã€ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ã¦ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¦ãã ã•ã„"
+        .Value = "uŒŸõvƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚Äƒf[ƒ^‚ğæ“¾‚µ‚Ä‚­‚¾‚³‚¢"
         .HorizontalAlignment = xlCenter
         .Font.Color = RGB(156, 163, 175)
         .Font.Size = 11
@@ -223,13 +223,13 @@ Public Sub InitRanking()
 
     Application.ScreenUpdating = True
 
-    MsgBox "ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—å®Œäº†ï¼" & vbCrLf & vbCrLf & _
-           "ãƒ¢ãƒ¼ãƒ‰ã¨å¯¾è±¡æœŸé–“ã‚’è¨­å®šã—ã¦ã€Œæ¤œç´¢ã€ã‚’æŠ¼ã—ã¦ãã ã•ã„ã€‚", _
-           vbInformation, "å‡ºè·ãƒ©ãƒ³ã‚­ãƒ³ã‚°"
+    MsgBox "ƒZƒbƒgƒAƒbƒvŠ®—¹I" & vbCrLf & vbCrLf & _
+           "ƒ‚[ƒh‚Æ‘ÎÛŠúŠÔ‚ğİ’è‚µ‚ÄuŒŸõv‚ğ‰Ÿ‚µ‚Ä‚­‚¾‚³‚¢B", _
+           vbInformation, "o‰×ƒ‰ƒ“ƒLƒ“ƒO"
 End Sub
 
 ' ===========================================================
-'  ãƒœã‚¿ãƒ³ä½œæˆãƒ˜ãƒ«ãƒ‘ãƒ¼
+'  ƒ{ƒ^ƒ“ì¬ƒwƒ‹ƒp[
 ' ===========================================================
 Private Sub CreateBtn(ws As Worksheet, sName As String, _
                       x As Double, y As Double, w As Double, h As Double, _
@@ -255,25 +255,25 @@ Private Sub CreateBtn(ws As Worksheet, sName As String, _
 End Sub
 
 ' ===========================================================
-'  ãƒ¢ãƒ¼ãƒ‰åˆ‡æ›¿
+'  ƒ‚[ƒhØ‘Ö
 ' ===========================================================
 Public Sub SetModeYearly()
-    SetMode "å¹´é–“"
+    SetMode "”NŠÔ"
 End Sub
 
 Public Sub SetModeMonthly()
-    SetMode "æœˆé–“"
+    SetMode "ŒŠÔ"
 End Sub
 
 Public Sub SetModeDaily()
-    SetMode "æ—¥åˆ¥"
+    SetMode "“ú•Ê"
 End Sub
 
 Private Sub SetMode(newMode As String)
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets(SH_NAME)
 
-    ' ç¾åœ¨ã®æ—¥ä»˜å…¥åŠ›ã‹ã‚‰ãƒ‘ãƒ¼ãƒ„å–å¾—
+    ' Œ»İ‚Ì“ú•t“ü—Í‚©‚çƒp[ƒcæ“¾
     Dim cur As String: cur = Trim(CStr(ws.Range(DATE_CELL).Value))
     Dim yr As String:  yr = CStr(Year(Date))
     Dim mo As String:  mo = Format(Month(Date), "00")
@@ -286,29 +286,29 @@ Private Sub SetMode(newMode As String)
         If UBound(p) >= 2 Then dy = Right("00" & p(2), 2)
     End If
 
-    ' ãƒ¢ãƒ¼ãƒ‰ä¿å­˜ & æ—¥ä»˜æ›´æ–°
+    ' ƒ‚[ƒh•Û‘¶ & “ú•tXV
     ws.Range(MODE_CELL).Value = newMode
     Select Case newMode
-        Case "å¹´é–“"
+        Case "”NŠÔ"
             ws.Range(DATE_CELL).Value = yr
-            ws.Range(HINT_CELL).Value = "ä¾‹: 2024"
-        Case "æœˆé–“"
+            ws.Range(HINT_CELL).Value = "—á: 2024"
+        Case "ŒŠÔ"
             ws.Range(DATE_CELL).Value = yr & "-" & mo
-            ws.Range(HINT_CELL).Value = "ä¾‹: 2024-03"
-        Case "æ—¥åˆ¥"
+            ws.Range(HINT_CELL).Value = "—á: 2024-03"
+        Case "“ú•Ê"
             ws.Range(DATE_CELL).Value = yr & "-" & mo & "-" & dy
-            ws.Range(HINT_CELL).Value = "ä¾‹: 2024-03-15"
+            ws.Range(HINT_CELL).Value = "—á: 2024-03-15"
     End Select
 
-    ' ãƒœã‚¿ãƒ³è‰²æ›´æ–°
+    ' ƒ{ƒ^ƒ“FXV
     UpdateModeButtons ws, newMode
 
-    ' è‡ªå‹•æ¤œç´¢
+    ' ©“®ŒŸõ
     FetchRanking
 End Sub
 
 Private Sub UpdateModeButtons(ws As Worksheet, activeMode As String)
-    Dim modes As Variant: modes = Array("å¹´é–“", "æœˆé–“", "æ—¥åˆ¥")
+    Dim modes As Variant: modes = Array("”NŠÔ", "ŒŠÔ", "“ú•Ê")
     Dim names As Variant: names = Array("btnYearly", "btnMonthly", "btnDaily")
     Dim i As Long
 
@@ -331,7 +331,7 @@ Private Sub UpdateModeButtons(ws As Worksheet, activeMode As String)
 End Sub
 
 ' ===========================================================
-'  ãƒ‡ãƒ¼ã‚¿å–å¾—  (ãƒ¡ã‚¤ãƒ³å‡¦ç†)
+'  ƒf[ƒ^æ“¾  (ƒƒCƒ“ˆ—)
 ' ===========================================================
 Public Sub FetchRanking()
     Dim ws As Worksheet
@@ -340,45 +340,45 @@ Public Sub FetchRanking()
     Dim mode As String:   mode = ws.Range(MODE_CELL).Value
     Dim target As String: target = Trim(CStr(ws.Range(DATE_CELL).Value))
 
-    If mode = "" Then mode = "å¹´é–“"
+    If mode = "" Then mode = "”NŠÔ"
     If target = "" Then
-        MsgBox "å¯¾è±¡æœŸé–“ã‚’å…¥åŠ›ã—ã¦ãã ã•ã„ã€‚", vbExclamation
+        MsgBox "‘ÎÛŠúŠÔ‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢B", vbExclamation
         Exit Sub
     End If
 
-    ' å…¥åŠ›ãƒã‚§ãƒƒã‚¯
+    ' “ü—Íƒ`ƒFƒbƒN
     If Not IsValidInput(mode, target) Then Exit Sub
 
     Application.ScreenUpdating = False
-    Application.StatusBar = "ãƒ‡ãƒ¼ã‚¿å–å¾—ä¸­..."
+    Application.StatusBar = "ƒf[ƒ^æ“¾’†..."
 
-    ' ãƒ‡ãƒ¼ã‚¿ã‚¨ãƒªã‚¢ã‚¯ãƒªã‚¢
+    ' ƒf[ƒ^ƒGƒŠƒAƒNƒŠƒA
     ClearDataArea ws
 
-    ' æ—¥ä»˜æ¡ä»¶ & æœŸé–“ãƒ©ãƒ™ãƒ«æ§‹ç¯‰
+    ' “ú•tğŒ & ŠúŠÔƒ‰ƒxƒ‹\’z
     Dim dateCondition As String
     Dim periodLabel As String
     Dim parts() As String
 
     Select Case mode
-        Case "å¹´é–“"
+        Case "”NŠÔ"
             dateCondition = "to_char(sm.shukka_j_date, 'YYYY') = '" & Left(target, 4) & "'"
-            periodLabel = Left(target, 4) & "å¹´"
+            periodLabel = Left(target, 4) & "”N"
 
-        Case "æœˆé–“"
+        Case "ŒŠÔ"
             parts = Split(target, "-")
             dateCondition = "to_char(sm.shukka_j_date, 'YYYY') = '" & parts(0) & "'" & _
                             " AND to_char(sm.shukka_j_date, 'MM') = '" & parts(1) & "'"
-            periodLabel = parts(0) & "å¹´" & CInt(parts(1)) & "æœˆ"
+            periodLabel = parts(0) & "”N" & CInt(parts(1)) & "Œ"
 
-        Case "æ—¥åˆ¥"
+        Case "“ú•Ê"
             parts = Split(target, "-")
             dateCondition = "to_char(sm.shukka_j_date, 'YYYY/MM/DD') = '" & _
                             parts(0) & "/" & parts(1) & "/" & parts(2) & "'"
-            periodLabel = parts(0) & "å¹´" & CInt(parts(1)) & "æœˆ" & CInt(parts(2)) & "æ—¥"
+            periodLabel = parts(0) & "”N" & CInt(parts(1)) & "Œ" & CInt(parts(2)) & "“ú"
     End Select
 
-    ' SQL æ§‹ç¯‰
+    ' SQL \’z
     Dim sql As String
     sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
           "t.total_shukka_suu, t.shukka_count " & _
@@ -402,7 +402,7 @@ Public Sub FetchRanking()
           ") t " & _
           "WHERE ROWNUM <= " & MAX_RANK
 
-    ' ---- Oracle æ¥ç¶šè©¦è¡Œ ----
+    ' ---- Oracle Ú‘±s ----
     Dim conn As Object
     Dim rs As Object
     Dim oracleOK As Boolean: oracleOK = False
@@ -411,13 +411,13 @@ Public Sub FetchRanking()
     Set conn = CreateObject("ADODB.Connection")
     conn.ConnectionTimeout = 10
 
-    ' OraOLEDB ã§æ¥ç¶š
+    ' OraOLEDB ‚ÅÚ‘±
     conn.Open "Provider=OraOLEDB.Oracle;Data Source=" & DB_DSN & _
               ";User Id=" & DB_USER & ";Password=" & DB_PASS & ";"
 
     If Err.Number <> 0 Then
         Err.Clear
-        ' MSDAORA ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯
+        ' MSDAORA ƒtƒH[ƒ‹ƒoƒbƒN
         conn.Open "Provider=MSDAORA;Data Source=" & DB_DSN & _
                   ";User Id=" & DB_USER & ";Password=" & DB_PASS & ";"
     End If
@@ -435,7 +435,7 @@ Public Sub FetchRanking()
     End If
     On Error GoTo 0
 
-    ' ---- ãƒ‡ãƒ¼ã‚¿æ›¸ãè¾¼ã¿ ----
+    ' ---- ƒf[ƒ^‘‚«‚İ ----
     Dim row As Long:      row = DAT_ROW
     Dim totalQty As Long: totalQty = 0
     Dim cnt As Long:      cnt = 0
@@ -456,25 +456,25 @@ Public Sub FetchRanking()
         rs.Close
         conn.Close
     Else
-        ' ãƒ‡ãƒ¢ãƒ‡ãƒ¼ã‚¿
+        ' ƒfƒ‚ƒf[ƒ^
         If Not conn Is Nothing Then
             On Error Resume Next
             If conn.State = 1 Then conn.Close
             On Error GoTo 0
         End If
-        periodLabel = periodLabel & " (ãƒ‡ãƒ¢)"
+        periodLabel = periodLabel & " (ƒfƒ‚)"
         LoadDemoData ws, row, totalQty, cnt
     End If
 
     Set rs = Nothing
     Set conn = Nothing
 
-    ' ---- ã‚µãƒãƒªãƒ¼æ›´æ–° ----
+    ' ---- ƒTƒ}ƒŠ[XV ----
     ws.Range("B6").Value = periodLabel
-    ws.Range("D6").Value = cnt & " å“ç•ª"
-    ws.Range("E6").Value = "åˆè¨ˆ: " & Format(totalQty, "#,##0") & " å€‹"
+    ws.Range("D6").Value = cnt & " •i”Ô"
+    ws.Range("E6").Value = "‡Œv: " & Format(totalQty, "#,##0") & " ŒÂ"
 
-    ' ---- ãƒ‡ãƒ¼ã‚¿ãƒãƒ¼ (æ¡ä»¶ä»˜ãæ›¸å¼) ----
+    ' ---- ƒf[ƒ^ƒo[ (ğŒ•t‚«‘®) ----
     If cnt > 0 Then ApplyDataBars ws
 
     Application.StatusBar = False
@@ -482,31 +482,31 @@ Public Sub FetchRanking()
 End Sub
 
 ' ===========================================================
-'  å…¥åŠ›ãƒã‚§ãƒƒã‚¯
+'  “ü—Íƒ`ƒFƒbƒN
 ' ===========================================================
 Private Function IsValidInput(mode As String, target As String) As Boolean
     IsValidInput = True
     Select Case mode
-        Case "å¹´é–“"
+        Case "”NŠÔ"
             If Not (Len(target) = 4 And IsNumeric(target)) Then
-                MsgBox "å¹´é–“ãƒ¢ãƒ¼ãƒ‰: å¹´ã‚’4æ¡ã§å…¥åŠ›" & vbCrLf & "ä¾‹: 2024", vbExclamation
+                MsgBox "”NŠÔƒ‚[ƒh: ”N‚ğ4Œ…‚Å“ü—Í" & vbCrLf & "—á: 2024", vbExclamation
                 IsValidInput = False
             End If
-        Case "æœˆé–“"
+        Case "ŒŠÔ"
             If Not target Like "####-##" Then
-                MsgBox "æœˆé–“ãƒ¢ãƒ¼ãƒ‰: å¹´æœˆã‚’å…¥åŠ›" & vbCrLf & "ä¾‹: 2024-03", vbExclamation
+                MsgBox "ŒŠÔƒ‚[ƒh: ”NŒ‚ğ“ü—Í" & vbCrLf & "—á: 2024-03", vbExclamation
                 IsValidInput = False
             End If
-        Case "æ—¥åˆ¥"
+        Case "“ú•Ê"
             If Not target Like "####-##-##" Then
-                MsgBox "æ—¥åˆ¥ãƒ¢ãƒ¼ãƒ‰: æ—¥ä»˜ã‚’å…¥åŠ›" & vbCrLf & "ä¾‹: 2024-03-15", vbExclamation
+                MsgBox "“ú•Êƒ‚[ƒh: “ú•t‚ğ“ü—Í" & vbCrLf & "—á: 2024-03-15", vbExclamation
                 IsValidInput = False
             End If
     End Select
 End Function
 
 ' ===========================================================
-'  ãƒ‡ãƒ¼ã‚¿ã‚¨ãƒªã‚¢ã‚¯ãƒªã‚¢
+'  ƒf[ƒ^ƒGƒŠƒAƒNƒŠƒA
 ' ===========================================================
 Private Sub ClearDataArea(ws As Worksheet)
     Dim lastRow As Long
@@ -515,14 +515,14 @@ Private Sub ClearDataArea(ws As Worksheet)
         ws.Range("A" & DAT_ROW & ":E" & lastRow).Clear
         ws.Rows(DAT_ROW & ":" & lastRow).Hidden = False
     End If
-    ' ãƒãƒ¼ã‚¸ã‚»ãƒ«è§£é™¤
+    ' ƒ}[ƒWƒZƒ‹‰ğœ
     On Error Resume Next
     ws.Range("A" & DAT_ROW & ":E" & DAT_ROW).UnMerge
     On Error GoTo 0
 End Sub
 
 ' ===========================================================
-'  ãƒ‡ãƒ¼ã‚¿è¡Œã®æ›¸å¼è¨­å®š
+'  ƒf[ƒ^s‚Ì‘®İ’è
 ' ===========================================================
 Private Sub FormatDataRow(ws As Worksheet, row As Long)
     Dim i As Long
@@ -535,25 +535,25 @@ Private Sub FormatDataRow(ws As Worksheet, row As Long)
         End With
     Next i
 
-    ' é †ä½: ä¸­å¤®æƒãˆ
+    ' ‡ˆÊ: ’†‰›‘µ‚¦
     ws.Cells(row, 1).HorizontalAlignment = xlCenter
-    ' æ•°å€¤: å³æƒãˆãƒ»ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Š
+    ' ”’l: ‰E‘µ‚¦EƒJƒ“ƒ}‹æØ‚è
     ws.Cells(row, 4).HorizontalAlignment = xlRight
     ws.Cells(row, 4).NumberFormat = "#,##0"
     ws.Cells(row, 5).HorizontalAlignment = xlRight
     ws.Cells(row, 5).NumberFormat = "#,##0"
 
-    ' Top 3 ãƒ¡ãƒ€ãƒ«é¢¨
+    ' Top 3 ƒƒ_ƒ‹•—
     Select Case CLng(ws.Cells(row, 1).Value)
-        Case 1  ' é‡‘
+        Case 1  ' ‹à
             ws.Cells(row, 1).Interior.Color = RGB(254, 243, 199)
             ws.Cells(row, 1).Font.Color = RGB(217, 119, 6)
             ws.Cells(row, 1).Font.Bold = True
-        Case 2  ' éŠ€
+        Case 2  ' ‹â
             ws.Cells(row, 1).Interior.Color = RGB(243, 244, 246)
             ws.Cells(row, 1).Font.Color = RGB(107, 114, 128)
             ws.Cells(row, 1).Font.Bold = True
-        Case 3  ' éŠ…
+        Case 3  ' “º
             ws.Cells(row, 1).Interior.Color = RGB(254, 243, 199)
             ws.Cells(row, 1).Font.Color = RGB(180, 83, 9)
             ws.Cells(row, 1).Font.Bold = True
@@ -561,7 +561,7 @@ Private Sub FormatDataRow(ws As Worksheet, row As Long)
 End Sub
 
 ' ===========================================================
-'  ãƒ‡ãƒ¼ã‚¿ãƒãƒ¼ (æ¡ä»¶ä»˜ãæ›¸å¼)
+'  ƒf[ƒ^ƒo[ (ğŒ•t‚«‘®)
 ' ===========================================================
 Private Sub ApplyDataBars(ws As Worksheet)
     Dim lastRow As Long
@@ -580,21 +580,21 @@ Private Sub ApplyDataBars(ws As Worksheet)
 End Sub
 
 ' ===========================================================
-'  ãƒ‡ãƒ¢ãƒ‡ãƒ¼ã‚¿
+'  ƒfƒ‚ƒf[ƒ^
 ' ===========================================================
 Private Sub LoadDemoData(ws As Worksheet, ByRef startRow As Long, _
                          ByRef totalQty As Long, ByRef cnt As Long)
     Dim items(0 To 9, 0 To 1) As String
-    items(0, 0) = "4012273-00": items(0, 1) = "ãƒ™ã‚¢ãƒªãƒ³ã‚° A"
-    items(1, 0) = "4012274-01": items(1, 1) = "ã‚·ãƒ£ãƒ•ãƒˆ B"
-    items(2, 0) = "M167001-18": items(2, 1) = "ãƒ¢ãƒ¼ã‚¿ C"
-    items(3, 0) = "E505712-06": items(3, 1) = "ã‚»ãƒ³ã‚µãƒ¼ D"
-    items(4, 0) = "A910246-01": items(4, 1) = "ãƒãƒ«ãƒ– E"
-    items(5, 0) = "4000064-01": items(5, 1) = "ã‚®ã‚¢ F"
-    items(6, 0) = "M206597-02": items(6, 1) = "ãƒãƒ³ãƒ— G"
-    items(7, 0) = "A970831-00": items(7, 1) = "ãƒ•ã‚£ãƒ«ã‚¿ H"
-    items(8, 0) = "4015500-03": items(8, 1) = "ã‚«ãƒƒãƒ—ãƒªãƒ³ã‚° I"
-    items(9, 0) = "E300100-02": items(9, 1) = "ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ© J"
+    items(0, 0) = "4012273-00": items(0, 1) = "ƒxƒAƒŠƒ“ƒO A"
+    items(1, 0) = "4012274-01": items(1, 1) = "ƒVƒƒƒtƒg B"
+    items(2, 0) = "M167001-18": items(2, 1) = "ƒ‚[ƒ^ C"
+    items(3, 0) = "E505712-06": items(3, 1) = "ƒZƒ“ƒT[ D"
+    items(4, 0) = "A910246-01": items(4, 1) = "ƒoƒ‹ƒu E"
+    items(5, 0) = "4000064-01": items(5, 1) = "ƒMƒA F"
+    items(6, 0) = "M206597-02": items(6, 1) = "ƒ|ƒ“ƒv G"
+    items(7, 0) = "A970831-00": items(7, 1) = "ƒtƒBƒ‹ƒ^ H"
+    items(8, 0) = "4015500-03": items(8, 1) = "ƒJƒbƒvƒŠƒ“ƒO I"
+    items(9, 0) = "E300100-02": items(9, 1) = "ƒRƒ“ƒgƒ[ƒ‰ J"
 
     Dim row As Long: row = startRow
     Dim i As Long, idx As Long
@@ -626,7 +626,7 @@ Private Sub LoadDemoData(ws As Worksheet, ByRef startRow As Long, _
 End Sub
 
 ' ===========================================================
-'  æ—¥ä»˜ãƒŠãƒ“ã‚²ãƒ¼ã‚·ãƒ§ãƒ³
+'  “ú•tƒiƒrƒQ[ƒVƒ‡ƒ“
 ' ===========================================================
 Public Sub NavigatePrev()
     StepDate -1
@@ -644,19 +644,19 @@ Private Sub StepDate(delta As Long)
     Dim target As String: target = Trim(CStr(ws.Range(DATE_CELL).Value))
 
     Select Case mode
-        Case "å¹´é–“"
+        Case "”NŠÔ"
             If IsNumeric(target) Then
                 ws.Range(DATE_CELL).Value = CStr(CLng(target) + delta)
             End If
 
-        Case "æœˆé–“"
+        Case "ŒŠÔ"
             If InStr(target, "-") > 0 Then
                 Dim mp() As String: mp = Split(target, "-")
                 Dim md As Date: md = DateSerial(CInt(mp(0)), CInt(mp(1)) + delta, 1)
                 ws.Range(DATE_CELL).Value = Format(md, "yyyy-mm")
             End If
 
-        Case "æ—¥åˆ¥"
+        Case "“ú•Ê"
             If target Like "####-##-##" Then
                 Dim dp() As String: dp = Split(target, "-")
                 Dim dd As Date: dd = DateSerial(CInt(dp(0)), CInt(dp(1)), CInt(dp(2)) + delta)
@@ -668,7 +668,7 @@ Private Sub StepDate(delta As Long)
 End Sub
 
 ' ===========================================================
-'  çµã‚Šè¾¼ã¿ãƒ•ã‚£ãƒ«ã‚¿ãƒ¼
+'  i‚è‚İƒtƒBƒ‹ƒ^[
 ' ===========================================================
 Public Sub ApplyFilter()
     Dim ws As Worksheet
@@ -713,7 +713,7 @@ Public Sub ClearFilter()
 End Sub
 
 ' ===========================================================
-'  CSV å‡ºåŠ›
+'  CSV o—Í
 ' ===========================================================
 Public Sub ExportCSV()
     Dim ws As Worksheet
@@ -722,32 +722,32 @@ Public Sub ExportCSV()
     Dim lastRow As Long
     lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
     If lastRow < DAT_ROW Then
-        MsgBox "ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚Šã¾ã›ã‚“ã€‚", vbExclamation
+        MsgBox "ƒf[ƒ^‚ª‚ ‚è‚Ü‚¹‚ñB", vbExclamation
         Exit Sub
     End If
 
-    ' ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜ãƒ€ã‚¤ã‚¢ãƒ­ã‚°
+    ' ƒtƒ@ƒCƒ‹•Û‘¶ƒ_ƒCƒAƒƒO
     Dim period As String: period = CStr(ws.Range("B6").Value)
     If period = "" Then period = "ranking"
 
     Dim fileName As Variant
     fileName = Application.GetSaveAsFilename( _
-        InitialFileName:="å‡ºè·ãƒ©ãƒ³ã‚­ãƒ³ã‚°_" & period & ".csv", _
-        FileFilter:="CSV ãƒ•ã‚¡ã‚¤ãƒ« (*.csv),*.csv")
+        InitialFileName:="o‰×ƒ‰ƒ“ƒLƒ“ƒO_" & period & ".csv", _
+        FileFilter:="CSV ƒtƒ@ƒCƒ‹ (*.csv),*.csv")
 
     If fileName = False Then Exit Sub
 
-    ' BOM ä»˜ã UTF-8 ã§å‡ºåŠ› (ADODB.Stream)
+    ' BOM •t‚« UTF-8 ‚Åo—Í (ADODB.Stream)
     Dim stm As Object
     Set stm = CreateObject("ADODB.Stream")
     stm.Type = 2         ' adTypeText
     stm.Charset = "UTF-8"
     stm.Open
 
-    ' ãƒ˜ãƒƒãƒ€ãƒ¼
-    stm.WriteText "é †ä½,å“ç•ª,å“å,å‡ºè·æ•°åˆè¨ˆ,å‡ºè·å›æ•°", 1  ' 1 = adWriteLine
+    ' ƒwƒbƒ_[
+    stm.WriteText "‡ˆÊ,•i”Ô,•i–¼,o‰×”‡Œv,o‰×‰ñ”", 1  ' 1 = adWriteLine
 
-    ' ãƒ‡ãƒ¼ã‚¿ (è¡¨ç¤ºè¡Œã®ã¿)
+    ' ƒf[ƒ^ (•\¦s‚Ì‚İ)
     Dim row As Long
     For row = DAT_ROW To lastRow
         If Not ws.Rows(row).Hidden Then
@@ -765,5 +765,5 @@ Public Sub ExportCSV()
     stm.Close
     Set stm = Nothing
 
-    MsgBox "CSVå‡ºåŠ›å®Œäº†:" & vbCrLf & CStr(fileName), vbInformation
+    MsgBox "CSVo—ÍŠ®—¹:" & vbCrLf & CStr(fileName), vbInformation
 End Sub
