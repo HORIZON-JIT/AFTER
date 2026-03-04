@@ -435,36 +435,55 @@ Public Sub FetchRanking()
             periodLabel = parts(0) & "年" & CInt(parts(1)) & "月" & CInt(parts(2)) & "日"
     End Select
 
-    ' SQL 構築
-    Dim orderExpr As String
-    If sortMode = "出荷回数" Then
-        orderExpr = "COUNT(DISTINCT to_char(sm.shukka_j_date, 'YYYY/MM/DD')) DESC, SUM(sm.shukka_j_suu) DESC"
-    Else
-        orderExpr = "SUM(sm.shukka_j_suu) DESC, COUNT(DISTINCT to_char(sm.shukka_j_date, 'YYYY/MM/DD')) DESC"
-    End If
-
+    ' SQL 構築 (ソートモードで集計・ORDER BYを切替)
     Dim sql As String
-    sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
-          "t.total_shukka_suu, t.shukka_count " & _
-          "FROM (" & _
-          "  SELECT jm.hinban, " & _
-          "    MAX(jm.juchuu_hm_nm) AS hm_nm, " & _
-          "    SUM(sm.shukka_j_suu) AS total_shukka_suu, " & _
-          "    COUNT(DISTINCT to_char(sm.shukka_j_date, 'YYYY/MM/DD')) AS shukka_count " & _
-          "  FROM ecouser.t_shukka_m sm " & _
-          "  INNER JOIN ecouser.t_lot_info li ON li.lot_no = sm.lot_no " & _
-          "  INNER JOIN ecouser.t_juchuu_m jm " & _
-          "    ON jm.juchuu_no = li.juchuu_no AND jm.juchuu_line_no = li.juchuu_line_no " & _
-          "  INNER JOIN ecouser.t_juchuu_h jh " & _
-          "    ON jh.juchuu_no = jm.juchuu_no AND jh.juchuu_hansuu = jm.juchuu_hansuu " & _
-          "  WHERE jh.juchuu_kyoten_cd = 'A' " & _
-          "    AND " & dateCondition & " " & _
-          "    AND jm.hinban NOT LIKE 'C%' " & _
-          "    AND jm.hinban NOT LIKE 'U%' " & _
-          "  GROUP BY jm.hinban " & _
-          "  ORDER BY " & orderExpr & _
-          ") t " & _
-          "WHERE ROWNUM <= " & MAX_RANK
+    If sortMode = "出荷回数" Then
+        ' 出荷回数ランキング: COUNT(*) で出荷レコード件数を集計
+        sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
+              "t.total_shukka_suu, t.shukka_count " & _
+              "FROM (" & _
+              "  SELECT jm.hinban, " & _
+              "    MAX(jm.juchuu_hm_nm) AS hm_nm, " & _
+              "    SUM(sm.shukka_j_suu) AS total_shukka_suu, " & _
+              "    COUNT(*) AS shukka_count " & _
+              "  FROM ecouser.t_shukka_m sm " & _
+              "  INNER JOIN ecouser.t_lot_info li ON li.lot_no = sm.lot_no " & _
+              "  INNER JOIN ecouser.t_juchuu_m jm " & _
+              "    ON jm.juchuu_no = li.juchuu_no AND jm.juchuu_line_no = li.juchuu_line_no " & _
+              "  INNER JOIN ecouser.t_juchuu_h jh " & _
+              "    ON jh.juchuu_no = jm.juchuu_no AND jh.juchuu_hansuu = jm.juchuu_hansuu " & _
+              "  WHERE jh.juchuu_kyoten_cd = 'A' " & _
+              "    AND " & dateCondition & " " & _
+              "    AND jm.hinban NOT LIKE 'C%' " & _
+              "    AND jm.hinban NOT LIKE 'U%' " & _
+              "  GROUP BY jm.hinban " & _
+              "  ORDER BY COUNT(*) DESC, SUM(sm.shukka_j_suu) DESC" & _
+              ") t " & _
+              "WHERE ROWNUM <= " & MAX_RANK
+    Else
+        ' 出荷数ランキング: SUM で出荷数量を集計
+        sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
+              "t.total_shukka_suu, t.shukka_count " & _
+              "FROM (" & _
+              "  SELECT jm.hinban, " & _
+              "    MAX(jm.juchuu_hm_nm) AS hm_nm, " & _
+              "    SUM(sm.shukka_j_suu) AS total_shukka_suu, " & _
+              "    COUNT(*) AS shukka_count " & _
+              "  FROM ecouser.t_shukka_m sm " & _
+              "  INNER JOIN ecouser.t_lot_info li ON li.lot_no = sm.lot_no " & _
+              "  INNER JOIN ecouser.t_juchuu_m jm " & _
+              "    ON jm.juchuu_no = li.juchuu_no AND jm.juchuu_line_no = li.juchuu_line_no " & _
+              "  INNER JOIN ecouser.t_juchuu_h jh " & _
+              "    ON jh.juchuu_no = jm.juchuu_no AND jh.juchuu_hansuu = jm.juchuu_hansuu " & _
+              "  WHERE jh.juchuu_kyoten_cd = 'A' " & _
+              "    AND " & dateCondition & " " & _
+              "    AND jm.hinban NOT LIKE 'C%' " & _
+              "    AND jm.hinban NOT LIKE 'U%' " & _
+              "  GROUP BY jm.hinban " & _
+              "  ORDER BY SUM(sm.shukka_j_suu) DESC, COUNT(*) DESC" & _
+              ") t " & _
+              "WHERE ROWNUM <= " & MAX_RANK
+    End If
 
     ' ---- Oracle 接続試行 ----
     Dim conn As Object
@@ -712,13 +731,15 @@ Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
         If i >= 10 Then hinban = hinban & "-" & Format(i \ 10, "00")
 
         If sortMode = "出荷回数" Then
-            freq = 50 - i * 2
+            ' 出荷回数順: 回数が多い順 (回数と数量は必ずしも比例しない)
+            freq = 120 - i * 5
             If freq < 1 Then freq = 1
-            qty = freq * (5 + (i Mod 3) * 3)
+            qty = freq * (3 + (idx Mod 5)) + (10 - idx) * 2
         Else
+            ' 出荷数順: 数量が多い順
             qty = 500 - i * 20
             If qty < 1 Then qty = 1
-            freq = WorksheetFunction.Max(1, qty \ 10)
+            freq = WorksheetFunction.Max(1, 10 + (20 - i) * 3)
         End If
 
         buf(i, 0) = i + 1
