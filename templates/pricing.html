@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>価格計算システム</title>
+    <link rel="stylesheet" href="/static/pricing.css">
+</head>
+<body>
+    <header>
+        <h1>価格計算システム</h1>
+        <p class="subtitle">一括価格計算 / T仕切り / 上代等</p>
+        {% if not oracle_available %}
+        <span class="badge demo">デモモード</span>
+        {% else %}
+        <span class="badge live">DB接続中</span>
+        {% endif %}
+    </header>
+
+    <main>
+        <!-- 入力エリア -->
+        <section class="input-section">
+            <div class="input-grid">
+                <div class="input-area">
+                    <label for="hinban-input">品番入力（1行に1品番、またはカンマ区切り）</label>
+                    <textarea id="hinban-input" rows="8"
+                        placeholder="M167001-18&#10;4012273-00&#10;E505712-06&#10;A910246-01">M167001-18
+4012273-00
+E505712-06
+A910246-01
+L100001-00
+CV200001-00
+P300001-00</textarea>
+                    <div class="input-meta">
+                        <span id="input-count">7 件</span>
+                        <button class="btn-small" id="btn-clear">クリア</button>
+                        <button class="btn-small" id="btn-sample">サンプル</button>
+                    </div>
+                </div>
+                <div class="options-area">
+                    <h3>計算オプション</h3>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="calc-additional" checked>
+                        上代等も計算（HI仕切り / 仮上代 / D仕切り / 上代）
+                    </label>
+                    <details class="rate-settings">
+                        <summary>掛率設定（クリックで展開）</summary>
+                        <div class="rate-grid" id="rate-grid">
+                            <!-- JS で動的生成 -->
+                        </div>
+                    </details>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn-primary" id="btn-calculate">
+                    <span class="btn-icon">&#9654;</span> 一括計算実行
+                </button>
+                <button class="btn-secondary" id="btn-export-csv">CSV出力</button>
+            </div>
+        </section>
+
+        <!-- ローディング -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>計算中...</p>
+        </div>
+
+        <!-- サマリー -->
+        <section id="summary-section" class="summary-section hidden">
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-label">件数</div>
+                    <div class="card-value" id="sum-count">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">処理時間</div>
+                    <div class="card-value" id="sum-elapsed">0s</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">原価合計</div>
+                    <div class="card-value" id="sum-genka">-</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">T仕切り合計</div>
+                    <div class="card-value" id="sum-t">-</div>
+                </div>
+                <div class="card warn">
+                    <div class="card-label">NULL有り</div>
+                    <div class="card-value" id="sum-null">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- フィルター -->
+        <section id="filter-section" class="filter-section hidden">
+            <input type="text" id="filter-input" placeholder="品番で絞り込み...">
+            <select id="filter-category">
+                <option value="">全カテゴリ</option>
+                <option value="M">M番</option>
+                <option value="4">4番</option>
+                <option value="E">E番</option>
+                <option value="F">F番</option>
+                <option value="A">A番</option>
+                <option value="L">L番</option>
+                <option value="CV">CV番</option>
+                <option value="UM">UM番</option>
+                <option value="P">P番</option>
+            </select>
+            <label class="checkbox-label inline">
+                <input type="checkbox" id="filter-null"> NULL有りのみ
+            </label>
+        </section>
+
+        <!-- 結果テーブル -->
+        <section id="result-section" class="result-section hidden">
+            <div class="table-wrap">
+                <table id="result-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-col="0">#</th>
+                            <th class="sortable" data-col="1">品番</th>
+                            <th>カテゴリ</th>
+                            <th class="sortable num" data-col="3">原価</th>
+                            <th class="sortable num" data-col="4">T仕切り</th>
+                            <th class="sortable num" data-col="5">H仕切り</th>
+                            <th class="sortable num" data-col="6">HI仕切り</th>
+                            <th class="sortable num" data-col="7">仮上代</th>
+                            <th class="sortable num" data-col="8">D仕切り</th>
+                            <th class="sortable num" data-col="9">上代</th>
+                            <th>掛率</th>
+                            <th>部品区分</th>
+                            <th>NULL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- A番詳細モーダル -->
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="modal-title">A番 詳細</h3>
+                    <button class="modal-close" id="modal-close">&times;</button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/pricing.js"></script>
+</body>
+</html>

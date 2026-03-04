@@ -1,0 +1,345 @@
+/* 価格計算システム CSS */
+:root {
+    --primary: #1a56db;
+    --primary-light: #3b82f6;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: "Segoe UI", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+header {
+    background: linear-gradient(135deg, #0f172a 0%, var(--primary) 100%);
+    color: #fff;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+header h1 { font-size: 1.5rem; font-weight: 700; }
+header .subtitle { font-size: 0.85rem; opacity: 0.8; }
+
+.badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    font-weight: 600;
+    margin-left: auto;
+}
+.badge.demo { background: var(--warn); color: #000; }
+.badge.live { background: var(--success); color: #fff; }
+
+main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+/* Input Section */
+.input-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+@media (max-width: 800px) {
+    .input-grid { grid-template-columns: 1fr; }
+}
+
+.input-area label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.4rem;
+}
+textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem;
+    font-family: "Consolas", "Source Code Pro", monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+textarea:focus { outline: none; border-color: var(--primary-light); }
+
+.input-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.options-area h3 { font-size: 0.9rem; margin-bottom: 0.6rem; }
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.checkbox-label.inline { display: inline-flex; }
+
+.rate-settings {
+    margin-top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem;
+}
+.rate-settings summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: 600;
+}
+.rate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+.rate-grid label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+.rate-grid input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Buttons */
+.action-bar {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+    flex-wrap: wrap;
+}
+.btn-primary, .btn-secondary, .btn-small {
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+    padding: 0.7rem 2rem;
+    font-size: 1rem;
+}
+.btn-primary:hover { background: var(--primary-light); box-shadow: 0 4px 12px rgba(26,86,219,0.3); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+}
+.btn-secondary:hover { background: var(--bg); }
+.btn-small {
+    background: transparent;
+    color: var(--primary);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+.btn-icon { margin-right: 0.3rem; }
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 3rem;
+}
+.spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 0.8rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+/* Summary */
+.summary-section { margin-bottom: 1rem; }
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8rem;
+}
+.card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    text-align: center;
+}
+.card-label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; }
+.card-value { font-size: 1.3rem; font-weight: 700; margin-top: 0.3rem; }
+.card.warn .card-value { color: var(--danger); }
+
+/* Filter */
+.filter-section {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+}
+.filter-section input[type="text"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    width: 250px;
+}
+.filter-section select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+
+/* Result Table */
+.result-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+thead { background: #f1f5f9; position: sticky; top: 0; z-index: 2; }
+th {
+    padding: 0.6rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+}
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--primary); }
+th.num, td.num { text-align: right; }
+
+td {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+tr:hover { background: #f8fafc; }
+
+/* カテゴリバッジ */
+.cat-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+}
+.cat-M { background: #2563eb; }
+.cat-4 { background: #7c3aed; }
+.cat-E { background: #059669; }
+.cat-F { background: #059669; }
+.cat-A { background: #dc2626; }
+.cat-L { background: #d97706; }
+.cat-CV { background: #0891b2; }
+.cat-UM { background: #4f46e5; }
+.cat-P { background: #be185d; }
+
+.null-flag { color: var(--danger); font-weight: 700; }
+
+.clickable { cursor: pointer; color: var(--primary); text-decoration: underline; }
+
+/* H仕切り比較 */
+.price-high { background: #fef3c7; } /* T仕切り >= H仕切り×比率 黄色 */
+.price-low { background: #cffafe; }  /* T仕切り < H仕切り 水色 */
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+.modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+}
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-light);
+}
+.modal-body {
+    padding: 1.2rem;
+    overflow-y: auto;
+}
+.modal-body table { margin-top: 0.8rem; }
+.modal-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+.modal-summary .item {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 0.6rem;
+}
+.modal-summary .item-label { font-size: 0.72rem; color: var(--text-light); }
+.modal-summary .item-value { font-size: 1rem; font-weight: 700; }
