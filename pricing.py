@@ -133,26 +133,28 @@ class RateTable:
     rate_um: float = 1.525     # 152.5% UM番 (F40)
     rate_p: float = 1.525      # 152.5% P番 (F23)
 
-    # HI仕切り
-    hi_var1: float = 1.0
-    hi_var2: float = 1.0
-    hi_var3: float = 1.0
+    # HI仕切り = T仕切 ÷ var1 × var2 × var3 (F51-F53)
+    hi_var1: float = 0.52
+    hi_var2: float = 0.57
+    hi_var3: float = 1.05
 
-    # 仮上代
-    ka_var1: float = 1.0
-    ka_var2: float = 1.0
-    ka_var3: float = 1.0   # 4番以外
-    ka_var4: float = 1.0   # 4番以外
+    # 仮上代 (F57-F60)
+    # 4番以外: T仕切 ÷ var1 × var2 × var3 × var4
+    # 4番:     T仕切 ÷ var1 × var2
+    ka_var1: float = 0.52
+    ka_var2: float = 1.05
+    ka_var3: float = 1.05     # 4番以外
+    ka_var4: float = 1.3068   # 4番以外
 
-    # ディーラー仕切り
-    de_var1: float = 1.0
+    # ディーラー仕切り = HI仕切 × var1 (F63)
+    de_var1: float = 1.155
 
-    # 上代
-    jo_rate1: float = 1.0
-    jo_band1: float = 11000
-    jo_rate2: float = 1.0
-    jo_band2: float = 33000
-    jo_rate3: float = 1.0
+    # 上代 (F71-F73, E71-E72)
+    jo_rate1: float = 1.5     # 仮上代 0～15,000未満
+    jo_band1: float = 15000
+    jo_rate2: float = 1.3     # 仮上代 15,000～40,000未満
+    jo_band2: float = 40000
+    jo_rate3: float = 1.2     # 仮上代 40,000以上
 
     # H仕切り対T仕切り比較用
     h_ratio: float = 1.0
