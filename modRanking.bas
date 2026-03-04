@@ -2,7 +2,7 @@ Attribute VB_Name = "modRanking"
 Option Explicit
 
 ' ==========================================================
-' アフター部門 出荷ランキング TOP100  (Excel VBA版)
+' アフター部門 出荷ランキング TOP100/300/500  (Excel VBA版)
 '
 ' セットアップ手順:
 '   1. 新規 Excel ブックを開き .xlsm で保存
@@ -20,7 +20,6 @@ Option Explicit
 Private Const DB_USER As String = "ECOREAD"
 Private Const DB_PASS As String = "ECOread01#"
 Private Const DB_DSN  As String = "172.25.3.119:1521/orcl.hrz.local"
-Private Const MAX_RANK As Long = 100
 
 ' ── レイアウト定数 ──
 Private Const SH_NAME   As String = "ランキング"
@@ -30,6 +29,7 @@ Private Const MODE_CELL As String = "G1" ' モード保存セル (非表示列)
 Private Const DATE_CELL As String = "D3" ' 日付入力セル
 Private Const HINT_CELL As String = "E3" ' ヒント表示セル
 Private Const SORT_CELL As String = "G2" ' ソート保存セル (非表示列)
+Private Const RANK_CELL As String = "G3" ' TOP件数保存セル (非表示列)
 
 ' ===========================================================
 '  初期セットアップ (Alt+F8 → InitRanking)
@@ -80,7 +80,7 @@ Public Sub InitRanking()
     ' ---- Row 1: タイトルバー ----
     With ws.Range("A1:E1")
         .Merge
-        .Value = "アフター部門 出荷ランキング TOP100"
+        .Value = "アフター部門 出荷数ランキング TOP100"
         .Font.Size = 16
         .Font.Bold = True
         .Font.Color = vbWhite
@@ -151,7 +151,7 @@ Public Sub InitRanking()
     CreateBtn ws, "btnCSV", ws.Range("D4").Left + 2, r4Top, 75, bh, _
               "ExportCSV", "CSV出力", RGB(16, 185, 129), vbWhite
 
-    ' ---- Row 5: ソート切替 ----
+    ' ---- Row 5: ソート切替 + TOP件数 ----
     ws.Rows(5).RowHeight = 28
     ws.Range("A5").Value = "並び順:"
     ws.Range("A5").Font.Bold = True
@@ -162,8 +162,17 @@ Public Sub InitRanking()
     x = x + 60
     CreateBtn ws, "btnSortFreq", x, r5Top, 56, bh, "SetSortByFreq", "出荷回数順", RGB(229, 231, 235), RGB(31, 41, 55)
 
-    ' ソート初期値
+    ' TOP件数ボタン
+    x = ws.Range("D5").Left
+    CreateBtn ws, "btnTop100", x, r5Top, 42, bh, "SetTop100", "TOP100", RGB(26, 86, 219), vbWhite
+    x = x + 46
+    CreateBtn ws, "btnTop300", x, r5Top, 42, bh, "SetTop300", "TOP300", RGB(229, 231, 235), RGB(31, 41, 55)
+    x = x + 46
+    CreateBtn ws, "btnTop500", x, r5Top, 42, bh, "SetTop500", "TOP500", RGB(229, 231, 235), RGB(31, 41, 55)
+
+    ' ソート・件数初期値
     ws.Range(SORT_CELL).Value = "出荷数"
+    ws.Range(RANK_CELL).Value = 100
 
     ' ---- Row 6: サマリー ----
     ws.Range("A6").Value = "集計期間:"
@@ -384,6 +393,51 @@ Private Sub UpdateSortButtons(ws As Worksheet, activeSort As String)
 End Sub
 
 ' ===========================================================
+'  TOP件数切替
+' ===========================================================
+Public Sub SetTop100()
+    SetTopN 100
+End Sub
+
+Public Sub SetTop300()
+    SetTopN 300
+End Sub
+
+Public Sub SetTop500()
+    SetTopN 500
+End Sub
+
+Private Sub SetTopN(n As Long)
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets(SH_NAME)
+    ws.Range(RANK_CELL).Value = n
+    UpdateTopButtons ws, n
+    FetchRanking
+End Sub
+
+Private Sub UpdateTopButtons(ws As Worksheet, activeN As Long)
+    Dim tops As Variant: tops = Array(100, 300, 500)
+    Dim names As Variant: names = Array("btnTop100", "btnTop300", "btnTop500")
+    Dim i As Long
+    For i = 0 To 2
+        On Error Resume Next
+        Dim shp As Shape
+        Set shp = ws.Shapes(names(i))
+        If Not shp Is Nothing Then
+            If CLng(tops(i)) = activeN Then
+                shp.Fill.ForeColor.RGB = RGB(26, 86, 219)
+                shp.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite
+            Else
+                shp.Fill.ForeColor.RGB = RGB(229, 231, 235)
+                shp.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(31, 41, 55)
+            End If
+        End If
+        Set shp = Nothing
+        On Error GoTo 0
+    Next i
+End Sub
+
+' ===========================================================
 '  データ取得  (メイン処理)
 ' ===========================================================
 Public Sub FetchRanking()
@@ -393,6 +447,12 @@ Public Sub FetchRanking()
     Dim mode As String:     mode = ws.Range(MODE_CELL).Value
     Dim target As String:   target = Trim(CStr(ws.Range(DATE_CELL).Value))
     Dim sortMode As String: sortMode = ws.Range(SORT_CELL).Value
+    Dim maxRank As Long
+    If IsNumeric(ws.Range(RANK_CELL).Value) Then
+        maxRank = CLng(ws.Range(RANK_CELL).Value)
+    Else
+        maxRank = 100
+    End If
 
     If mode = "" Then mode = "年間"
     If sortMode = "" Then sortMode = "出荷数"
@@ -459,7 +519,7 @@ Public Sub FetchRanking()
               "  GROUP BY jm.hinban " & _
               "  ORDER BY COUNT(*) DESC, SUM(sm.shukka_j_suu) DESC" & _
               ") t " & _
-              "WHERE ROWNUM <= " & MAX_RANK
+              "WHERE ROWNUM <= " & maxRank
     Else
         ' 出荷数ランキング: SUM で出荷数量を集計
         sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
@@ -482,7 +542,7 @@ Public Sub FetchRanking()
               "  GROUP BY jm.hinban " & _
               "  ORDER BY SUM(sm.shukka_j_suu) DESC, COUNT(*) DESC" & _
               ") t " & _
-              "WHERE ROWNUM <= " & MAX_RANK
+              "WHERE ROWNUM <= " & maxRank
     End If
 
     ' ---- Oracle 接続試行 ----
@@ -524,7 +584,7 @@ Public Sub FetchRanking()
     Dim buf() As Variant
 
     If oracleOK Then
-        ReDim buf(0 To MAX_RANK - 1, 0 To 4)
+        ReDim buf(0 To maxRank - 1, 0 To 4)
         Do While Not rs.EOF
             buf(cnt, 0) = rs.Fields("rank_no").Value
             buf(cnt, 1) = rs.Fields("hinban").Value
@@ -549,7 +609,7 @@ Public Sub FetchRanking()
             On Error GoTo 0
         End If
         periodLabel = periodLabel & " (デモ)"
-        LoadDemoData ws, cnt, totalQty, buf, sortMode
+        LoadDemoData ws, cnt, totalQty, buf, sortMode, maxRank
         If cnt > 0 Then
             ws.Range("A" & DAT_ROW).Resize(cnt, 5).Value = buf
         End If
@@ -562,10 +622,11 @@ Public Sub FetchRanking()
     If cnt > 0 Then FormatDataBulk ws, cnt
 
     ' ---- タイトル・サマリー更新 ----
+    Dim rankLabel As String: rankLabel = "TOP" & maxRank
     If sortMode = "出荷回数" Then
-        ws.Range("A1").Value = "アフター部門 出荷回数ランキング TOP100"
+        ws.Range("A1").Value = "アフター部門 出荷回数ランキング " & rankLabel
     Else
-        ws.Range("A1").Value = "アフター部門 出荷数ランキング TOP100"
+        ws.Range("A1").Value = "アフター部門 出荷数ランキング " & rankLabel
     End If
     ws.Range("B6").Value = periodLabel
     ws.Range("D6").Value = cnt & " 品番"
@@ -707,7 +768,7 @@ End Sub
 ' ===========================================================
 Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
                          ByRef totalQty As Long, ByRef buf() As Variant, _
-                         sortMode As String)
+                         sortMode As String, maxRank As Long)
     Dim items(0 To 9, 0 To 1) As String
     items(0, 0) = "4012273-00": items(0, 1) = "ベアリング A"
     items(1, 0) = "4012274-01": items(1, 1) = "シャフト B"
@@ -720,7 +781,7 @@ Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
     items(8, 0) = "4015500-03": items(8, 1) = "カップリング I"
     items(9, 0) = "E300100-02": items(9, 1) = "コントローラ J"
 
-    Const DEMO_COUNT As Long = 20
+    Dim DEMO_COUNT As Long: DEMO_COUNT = WorksheetFunction.Min(maxRank, 50)
     ReDim buf(0 To DEMO_COUNT - 1, 0 To 4)
     Dim i As Long, idx As Long
     Dim qty As Long, freq As Long, hinban As String
