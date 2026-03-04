@@ -2,7 +2,7 @@ Attribute VB_Name = "modRanking"
 Option Explicit
 
 ' ==========================================================
-' アフター部門 出荷数ランキング TOP100  (Excel VBA版)
+' アフター部門 出荷ランキング TOP100  (Excel VBA版)
 '
 ' セットアップ手順:
 '   1. 新規 Excel ブックを開き .xlsm で保存
@@ -29,6 +29,7 @@ Private Const DAT_ROW   As Long = 10    ' データ開始行
 Private Const MODE_CELL As String = "G1" ' モード保存セル (非表示列)
 Private Const DATE_CELL As String = "D3" ' 日付入力セル
 Private Const HINT_CELL As String = "E3" ' ヒント表示セル
+Private Const SORT_CELL As String = "G2" ' ソート保存セル (非表示列)
 
 ' ===========================================================
 '  初期セットアップ (Alt+F8 → InitRanking)
@@ -79,7 +80,7 @@ Public Sub InitRanking()
     ' ---- Row 1: タイトルバー ----
     With ws.Range("A1:E1")
         .Merge
-        .Value = "アフター部門 出荷数ランキング TOP100"
+        .Value = "アフター部門 出荷ランキング TOP100"
         .Font.Size = 16
         .Font.Bold = True
         .Font.Color = vbWhite
@@ -150,8 +151,19 @@ Public Sub InitRanking()
     CreateBtn ws, "btnCSV", ws.Range("D4").Left + 2, r4Top, 75, bh, _
               "ExportCSV", "CSV出力", RGB(16, 185, 129), vbWhite
 
-    ' ---- Row 5: 余白 ----
-    ws.Rows(5).RowHeight = 6
+    ' ---- Row 5: ソート切替 ----
+    ws.Rows(5).RowHeight = 28
+    ws.Range("A5").Value = "並び順:"
+    ws.Range("A5").Font.Bold = True
+    ws.Range("A5").Font.Size = 10
+    Dim r5Top As Double: r5Top = ws.Range("A5").Top + 3
+    x = ws.Range("B5").Left
+    CreateBtn ws, "btnSortQty", x, r5Top, 56, bh, "SetSortByQty", "出荷数順", RGB(26, 86, 219), vbWhite
+    x = x + 60
+    CreateBtn ws, "btnSortFreq", x, r5Top, 56, bh, "SetSortByFreq", "出荷回数順", RGB(229, 231, 235), RGB(31, 41, 55)
+
+    ' ソート初期値
+    ws.Range(SORT_CELL).Value = "出荷数"
 
     ' ---- Row 6: サマリー ----
     ws.Range("A6").Value = "集計期間:"
@@ -331,16 +343,59 @@ Private Sub UpdateModeButtons(ws As Worksheet, activeMode As String)
 End Sub
 
 ' ===========================================================
+'  ソート切替
+' ===========================================================
+Public Sub SetSortByQty()
+    SetSort "出荷数"
+End Sub
+
+Public Sub SetSortByFreq()
+    SetSort "出荷回数"
+End Sub
+
+Private Sub SetSort(newSort As String)
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets(SH_NAME)
+    ws.Range(SORT_CELL).Value = newSort
+    UpdateSortButtons ws, newSort
+    FetchRanking
+End Sub
+
+Private Sub UpdateSortButtons(ws As Worksheet, activeSort As String)
+    Dim sorts As Variant: sorts = Array("出荷数", "出荷回数")
+    Dim names As Variant: names = Array("btnSortQty", "btnSortFreq")
+    Dim i As Long
+    For i = 0 To 1
+        On Error Resume Next
+        Dim shp As Shape
+        Set shp = ws.Shapes(names(i))
+        If Not shp Is Nothing Then
+            If sorts(i) = activeSort Then
+                shp.Fill.ForeColor.RGB = RGB(26, 86, 219)
+                shp.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite
+            Else
+                shp.Fill.ForeColor.RGB = RGB(229, 231, 235)
+                shp.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(31, 41, 55)
+            End If
+        End If
+        Set shp = Nothing
+        On Error GoTo 0
+    Next i
+End Sub
+
+' ===========================================================
 '  データ取得  (メイン処理)
 ' ===========================================================
 Public Sub FetchRanking()
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets(SH_NAME)
 
-    Dim mode As String:   mode = ws.Range(MODE_CELL).Value
-    Dim target As String: target = Trim(CStr(ws.Range(DATE_CELL).Value))
+    Dim mode As String:     mode = ws.Range(MODE_CELL).Value
+    Dim target As String:   target = Trim(CStr(ws.Range(DATE_CELL).Value))
+    Dim sortMode As String: sortMode = ws.Range(SORT_CELL).Value
 
     If mode = "" Then mode = "年間"
+    If sortMode = "" Then sortMode = "出荷数"
     If target = "" Then
         MsgBox "対象期間を入力してください。", vbExclamation
         Exit Sub
@@ -381,6 +436,13 @@ Public Sub FetchRanking()
     End Select
 
     ' SQL 構築
+    Dim orderExpr As String
+    If sortMode = "出荷回数" Then
+        orderExpr = "COUNT(DISTINCT to_char(sm.shukka_j_date, 'YYYY/MM/DD')) DESC, SUM(sm.shukka_j_suu) DESC"
+    Else
+        orderExpr = "SUM(sm.shukka_j_suu) DESC, COUNT(DISTINCT to_char(sm.shukka_j_date, 'YYYY/MM/DD')) DESC"
+    End If
+
     Dim sql As String
     sql = "SELECT ROWNUM AS rank_no, t.hinban, t.hm_nm, " & _
           "t.total_shukka_suu, t.shukka_count " & _
@@ -400,7 +462,7 @@ Public Sub FetchRanking()
           "    AND jm.hinban NOT LIKE 'C%' " & _
           "    AND jm.hinban NOT LIKE 'U%' " & _
           "  GROUP BY jm.hinban " & _
-          "  ORDER BY SUM(sm.shukka_j_suu) DESC" & _
+          "  ORDER BY " & orderExpr & _
           ") t " & _
           "WHERE ROWNUM <= " & MAX_RANK
 
@@ -468,7 +530,7 @@ Public Sub FetchRanking()
             On Error GoTo 0
         End If
         periodLabel = periodLabel & " (デモ)"
-        LoadDemoData ws, cnt, totalQty, buf
+        LoadDemoData ws, cnt, totalQty, buf, sortMode
         If cnt > 0 Then
             ws.Range("A" & DAT_ROW).Resize(cnt, 5).Value = buf
         End If
@@ -480,13 +542,18 @@ Public Sub FetchRanking()
     ' ---- 一括書式設定 ----
     If cnt > 0 Then FormatDataBulk ws, cnt
 
-    ' ---- サマリー更新 ----
+    ' ---- タイトル・サマリー更新 ----
+    If sortMode = "出荷回数" Then
+        ws.Range("A1").Value = "アフター部門 出荷回数ランキング TOP100"
+    Else
+        ws.Range("A1").Value = "アフター部門 出荷数ランキング TOP100"
+    End If
     ws.Range("B6").Value = periodLabel
     ws.Range("D6").Value = cnt & " 品番"
     ws.Range("E6").Value = "合計: " & Format(totalQty, "#,##0") & " 個"
 
     ' ---- データバー (条件付き書式) ----
-    If cnt > 0 Then ApplyDataBars ws
+    If cnt > 0 Then ApplyDataBars ws, sortMode
 
     Application.StatusBar = False
     Application.EnableEvents = True
@@ -594,15 +661,21 @@ End Sub
 ' ===========================================================
 '  データバー (条件付き書式)
 ' ===========================================================
-Private Sub ApplyDataBars(ws As Worksheet)
+Private Sub ApplyDataBars(ws As Worksheet, sortMode As String)
     Dim lastRow As Long
     lastRow = ws.Cells(ws.Rows.Count, 4).End(xlUp).row
     If lastRow < DAT_ROW Then Exit Sub
 
-    Dim rng As Range
-    Set rng = ws.Range("D" & DAT_ROW & ":D" & lastRow)
+    ' 両列のデータバーをクリア
+    ws.Range("D" & DAT_ROW & ":D" & lastRow).FormatConditions.Delete
+    ws.Range("E" & DAT_ROW & ":E" & lastRow).FormatConditions.Delete
 
-    rng.FormatConditions.Delete
+    ' ソート対象列にデータバー適用
+    Dim col As String
+    If sortMode = "出荷回数" Then col = "E" Else col = "D"
+
+    Dim rng As Range
+    Set rng = ws.Range(col & DAT_ROW & ":" & col & lastRow)
 
     Dim db As Object
     Set db = rng.FormatConditions.AddDatabar
@@ -614,7 +687,8 @@ End Sub
 '  デモデータ (配列で返す)
 ' ===========================================================
 Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
-                         ByRef totalQty As Long, ByRef buf() As Variant)
+                         ByRef totalQty As Long, ByRef buf() As Variant, _
+                         sortMode As String)
     Dim items(0 To 9, 0 To 1) As String
     items(0, 0) = "4012273-00": items(0, 1) = "ベアリング A"
     items(1, 0) = "4012274-01": items(1, 1) = "シャフト B"
@@ -630,21 +704,28 @@ Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
     Const DEMO_COUNT As Long = 20
     ReDim buf(0 To DEMO_COUNT - 1, 0 To 4)
     Dim i As Long, idx As Long
-    Dim qty As Long, hinban As String
+    Dim qty As Long, freq As Long, hinban As String
 
     For i = 0 To DEMO_COUNT - 1
         idx = i Mod 10
         hinban = items(idx, 0)
         If i >= 10 Then hinban = hinban & "-" & Format(i \ 10, "00")
 
-        qty = 500 - i * 20
-        If qty < 1 Then qty = 1
+        If sortMode = "出荷回数" Then
+            freq = 50 - i * 2
+            If freq < 1 Then freq = 1
+            qty = freq * (5 + (i Mod 3) * 3)
+        Else
+            qty = 500 - i * 20
+            If qty < 1 Then qty = 1
+            freq = WorksheetFunction.Max(1, qty \ 10)
+        End If
 
         buf(i, 0) = i + 1
         buf(i, 1) = hinban
         buf(i, 2) = items(idx, 1) & " (" & (i + 1) & ")"
         buf(i, 3) = qty
-        buf(i, 4) = WorksheetFunction.Max(1, qty \ 10)
+        buf(i, 4) = freq
 
         totalQty = totalQty + qty
     Next i
