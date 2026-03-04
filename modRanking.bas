@@ -2,7 +2,7 @@ Attribute VB_Name = "modRanking"
 Option Explicit
 
 ' ==========================================================
-' アフター部門 出荷数ランキング TOP500  (Excel VBA版)
+' アフター部門 出荷数ランキング TOP100  (Excel VBA版)
 '
 ' セットアップ手順:
 '   1. 新規 Excel ブックを開き .xlsm で保存
@@ -20,7 +20,7 @@ Option Explicit
 Private Const DB_USER As String = "ECOREAD"
 Private Const DB_PASS As String = "ECOread01#"
 Private Const DB_DSN  As String = "172.25.3.119:1521/orcl.hrz.local"
-Private Const MAX_RANK As Long = 500
+Private Const MAX_RANK As Long = 100
 
 ' ── レイアウト定数 ──
 Private Const SH_NAME   As String = "ランキング"
@@ -79,7 +79,7 @@ Public Sub InitRanking()
     ' ---- Row 1: タイトルバー ----
     With ws.Range("A1:E1")
         .Merge
-        .Value = "アフター部門 出荷数ランキング TOP500"
+        .Value = "アフター部門 出荷数ランキング TOP100"
         .Font.Size = 16
         .Font.Bold = True
         .Font.Color = vbWhite
@@ -350,6 +350,8 @@ Public Sub FetchRanking()
     If Not IsValidInput(mode, target) Then Exit Sub
 
     Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
     Application.StatusBar = "データ取得中..."
 
     ' データエリアクリア
@@ -435,26 +437,29 @@ Public Sub FetchRanking()
     End If
     On Error GoTo 0
 
-    ' ---- データ書き込み ----
-    Dim row As Long:      row = DAT_ROW
+    ' ---- データ書き込み (配列一括) ----
     Dim totalQty As Long: totalQty = 0
     Dim cnt As Long:      cnt = 0
+    Dim buf() As Variant
 
     If oracleOK Then
+        ReDim buf(0 To MAX_RANK - 1, 0 To 4)
         Do While Not rs.EOF
-            ws.Cells(row, 1).Value = rs.Fields("rank_no").Value
-            ws.Cells(row, 2).Value = rs.Fields("hinban").Value
-            ws.Cells(row, 3).Value = rs.Fields("hm_nm").Value
-            ws.Cells(row, 4).Value = rs.Fields("total_shukka_suu").Value
-            ws.Cells(row, 5).Value = rs.Fields("shukka_count").Value
+            buf(cnt, 0) = rs.Fields("rank_no").Value
+            buf(cnt, 1) = rs.Fields("hinban").Value
+            buf(cnt, 2) = rs.Fields("hm_nm").Value
+            buf(cnt, 3) = rs.Fields("total_shukka_suu").Value
+            buf(cnt, 4) = rs.Fields("shukka_count").Value
             totalQty = totalQty + CLng(rs.Fields("total_shukka_suu").Value)
             cnt = cnt + 1
-            FormatDataRow ws, row
-            row = row + 1
             rs.MoveNext
         Loop
         rs.Close
         conn.Close
+        If cnt > 0 Then
+            ReDim Preserve buf(0 To cnt - 1, 0 To 4)
+            ws.Range("A" & DAT_ROW).Resize(cnt, 5).Value = buf
+        End If
     Else
         ' デモデータ
         If Not conn Is Nothing Then
@@ -463,11 +468,17 @@ Public Sub FetchRanking()
             On Error GoTo 0
         End If
         periodLabel = periodLabel & " (デモ)"
-        LoadDemoData ws, row, totalQty, cnt
+        LoadDemoData ws, cnt, totalQty, buf
+        If cnt > 0 Then
+            ws.Range("A" & DAT_ROW).Resize(cnt, 5).Value = buf
+        End If
     End If
 
     Set rs = Nothing
     Set conn = Nothing
+
+    ' ---- 一括書式設定 ----
+    If cnt > 0 Then FormatDataBulk ws, cnt
 
     ' ---- サマリー更新 ----
     ws.Range("B6").Value = periodLabel
@@ -478,6 +489,8 @@ Public Sub FetchRanking()
     If cnt > 0 Then ApplyDataBars ws
 
     Application.StatusBar = False
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
 End Sub
 
@@ -522,42 +535,60 @@ Private Sub ClearDataArea(ws As Worksheet)
 End Sub
 
 ' ===========================================================
-'  データ行の書式設定
+'  データ全行の書式を一括設定
 ' ===========================================================
-Private Sub FormatDataRow(ws As Worksheet, row As Long)
-    Dim i As Long
-    For i = 1 To 5
-        With ws.Cells(row, i)
-            .Font.Size = 10
-            .Borders(xlEdgeBottom).LineStyle = xlContinuous
-            .Borders(xlEdgeBottom).Color = RGB(229, 231, 235)
-            .Borders(xlEdgeBottom).Weight = xlHairline
-        End With
-    Next i
+Private Sub FormatDataBulk(ws As Worksheet, cnt As Long)
+    Dim lastRow As Long: lastRow = DAT_ROW + cnt - 1
+    Dim rng As Range
+    Set rng = ws.Range("A" & DAT_ROW & ":E" & lastRow)
 
-    ' 順位: 中央揃え
-    ws.Cells(row, 1).HorizontalAlignment = xlCenter
-    ' 数値: 右揃え・カンマ区切り
-    ws.Cells(row, 4).HorizontalAlignment = xlRight
-    ws.Cells(row, 4).NumberFormat = "#,##0"
-    ws.Cells(row, 5).HorizontalAlignment = xlRight
-    ws.Cells(row, 5).NumberFormat = "#,##0"
+    ' フォントサイズ一括
+    rng.Font.Size = 10
+
+    ' 下罫線一括
+    With rng.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(229, 231, 235)
+        .Weight = xlHairline
+    End With
+    With rng.Borders(xlInsideHorizontal)
+        .LineStyle = xlContinuous
+        .Color = RGB(229, 231, 235)
+        .Weight = xlHairline
+    End With
+
+    ' 順位列: 中央揃え
+    ws.Range("A" & DAT_ROW & ":A" & lastRow).HorizontalAlignment = xlCenter
+    ' 数値列: 右揃え・カンマ区切り
+    With ws.Range("D" & DAT_ROW & ":D" & lastRow)
+        .HorizontalAlignment = xlRight
+        .NumberFormat = "#,##0"
+    End With
+    With ws.Range("E" & DAT_ROW & ":E" & lastRow)
+        .HorizontalAlignment = xlRight
+        .NumberFormat = "#,##0"
+    End With
 
     ' Top 3 メダル風
-    Select Case CLng(ws.Cells(row, 1).Value)
-        Case 1  ' 金
-            ws.Cells(row, 1).Interior.Color = RGB(254, 243, 199)
-            ws.Cells(row, 1).Font.Color = RGB(217, 119, 6)
-            ws.Cells(row, 1).Font.Bold = True
-        Case 2  ' 銀
-            ws.Cells(row, 1).Interior.Color = RGB(243, 244, 246)
-            ws.Cells(row, 1).Font.Color = RGB(107, 114, 128)
-            ws.Cells(row, 1).Font.Bold = True
-        Case 3  ' 銅
-            ws.Cells(row, 1).Interior.Color = RGB(254, 243, 199)
-            ws.Cells(row, 1).Font.Color = RGB(180, 83, 9)
-            ws.Cells(row, 1).Font.Bold = True
-    End Select
+    With ws.Cells(DAT_ROW, 1)
+        .Interior.Color = RGB(254, 243, 199)
+        .Font.Color = RGB(217, 119, 6)
+        .Font.Bold = True
+    End With
+    If cnt >= 2 Then
+        With ws.Cells(DAT_ROW + 1, 1)
+            .Interior.Color = RGB(243, 244, 246)
+            .Font.Color = RGB(107, 114, 128)
+            .Font.Bold = True
+        End With
+    End If
+    If cnt >= 3 Then
+        With ws.Cells(DAT_ROW + 2, 1)
+            .Interior.Color = RGB(254, 243, 199)
+            .Font.Color = RGB(180, 83, 9)
+            .Font.Bold = True
+        End With
+    End If
 End Sub
 
 ' ===========================================================
@@ -580,10 +611,10 @@ Private Sub ApplyDataBars(ws As Worksheet)
 End Sub
 
 ' ===========================================================
-'  デモデータ
+'  デモデータ (配列で返す)
 ' ===========================================================
-Private Sub LoadDemoData(ws As Worksheet, ByRef startRow As Long, _
-                         ByRef totalQty As Long, ByRef cnt As Long)
+Private Sub LoadDemoData(ws As Worksheet, ByRef cnt As Long, _
+                         ByRef totalQty As Long, ByRef buf() As Variant)
     Dim items(0 To 9, 0 To 1) As String
     items(0, 0) = "4012273-00": items(0, 1) = "ベアリング A"
     items(1, 0) = "4012274-01": items(1, 1) = "シャフト B"
@@ -596,33 +627,28 @@ Private Sub LoadDemoData(ws As Worksheet, ByRef startRow As Long, _
     items(8, 0) = "4015500-03": items(8, 1) = "カップリング I"
     items(9, 0) = "E300100-02": items(9, 1) = "コントローラ J"
 
-    Dim row As Long: row = startRow
+    Const DEMO_COUNT As Long = 20
+    ReDim buf(0 To DEMO_COUNT - 1, 0 To 4)
     Dim i As Long, idx As Long
-    Dim qty As Long
-    Dim hinban As String
+    Dim qty As Long, hinban As String
 
-    For i = 0 To 49
+    For i = 0 To DEMO_COUNT - 1
         idx = i Mod 10
         hinban = items(idx, 0)
         If i >= 10 Then hinban = hinban & "-" & Format(i \ 10, "00")
 
-        qty = 500 - i * 8
+        qty = 500 - i * 20
         If qty < 1 Then qty = 1
 
-        ws.Cells(row, 1).Value = i + 1
-        ws.Cells(row, 2).Value = hinban
-        ws.Cells(row, 3).Value = items(idx, 1) & " (" & (i + 1) & ")"
-        ws.Cells(row, 4).Value = qty
-        ws.Cells(row, 5).Value = WorksheetFunction.Max(1, qty \ 10)
-
-        FormatDataRow ws, row
+        buf(i, 0) = i + 1
+        buf(i, 1) = hinban
+        buf(i, 2) = items(idx, 1) & " (" & (i + 1) & ")"
+        buf(i, 3) = qty
+        buf(i, 4) = WorksheetFunction.Max(1, qty \ 10)
 
         totalQty = totalQty + qty
-        cnt = cnt + 1
-        row = row + 1
     Next i
-
-    startRow = row
+    cnt = DEMO_COUNT
 End Sub
 
 ' ===========================================================
